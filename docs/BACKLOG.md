@@ -5,7 +5,7 @@ Tasks marked **[owner]** need a decision or an account from the owner: ask in Du
 
 ## Phase 0: foundation
 
-- [ ] **T-001 Run the SQL on a real database**
+- [x] **T-001 Run the SQL on a real database**
   Run `db/migrations/001_core.sql` and `002_staging_and_promote.sql` on a fresh PostgreSQL 15+ (local Docker
   or a Supabase test project). Fix any errors in new numbered migrations if already applied, otherwise in place.
   Add `db/tests/promote_test.sql` that inserts sample staging rows and checks: GTIN match, exact key match,

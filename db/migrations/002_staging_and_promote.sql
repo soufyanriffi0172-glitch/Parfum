@@ -229,8 +229,21 @@ end;
 $$;
 
 -- Only the service role (your server / admin tools) may run these.
-revoke all on function promote_staging(text) from public, anon, authenticated;
-revoke all on function resolve_review(bigint, text) from public, anon, authenticated;
+-- anon/authenticated only exist on Supabase; revoke from them there, skip on plain PostgreSQL.
+revoke all on function promote_staging(text) from public;
+revoke all on function resolve_review(bigint, text) from public;
+
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    execute 'revoke all on function promote_staging(text) from anon';
+    execute 'revoke all on function resolve_review(bigint, text) from anon';
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'revoke all on function promote_staging(text) from authenticated';
+    execute 'revoke all on function resolve_review(bigint, text) from authenticated';
+  end if;
+end $$;
 
 -- Optional (Supabase): run the promotion automatically every 30 minutes.
 -- select cron.schedule('promote-staging', '*/30 * * * *', $$select promote_staging()$$);

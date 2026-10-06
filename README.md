@@ -35,6 +35,23 @@ In deze map staat alles wat Claude Code nodig heeft om het project stap voor sta
 5. **Werk taak voor taak.** Laat Claude Code na elke taak de tests draaien en een korte samenvatting geven.
    Taken met **[owner]** vragen iets van jou: een account, een keuze of een controle van data.
 
+## Database
+De migraties in `db/migrations/` zijn getest tegen een echte PostgreSQL 16 (lokaal of Supabase).
+
+Lokaal testen (vervang `scentshelf_test` naar wens, en `psql -d ... -f ...` naar hoe jij verbindt):
+```bash
+createdb scentshelf_test
+psql -d scentshelf_test -v ON_ERROR_STOP=1 -f db/migrations/001_core.sql
+psql -d scentshelf_test -v ON_ERROR_STOP=1 -f db/migrations/002_staging_and_promote.sql
+psql -d scentshelf_test -v ON_ERROR_STOP=1 -f db/tests/promote_test.sql
+```
+`db/tests/promote_test.sql` zet testdata in `staging_product`, draait `promote_staging()` en `resolve_review()`,
+controleert elk scenario (GTIN-match, exacte naam-match, vergelijkbare naam → review, onbekende naam → draft,
+twee keer draaien verandert niets, `resolve_review('same'|'different')`) en rolt zichzelf terug (`rollback` aan
+het einde), dus de database blijft schoon en je kunt het script opnieuw draaien.
+
+Op Supabase: plak de migraties in de SQL editor van je (test)project, in dezelfde volgorde.
+
 ## Tips
 - Houd taken klein: één taak per sessie en per commit.
 - Laat het eerst een plan uitleggen bij grotere stappen, en pas daarna code schrijven.
@@ -42,6 +59,5 @@ In deze map staat alles wat Claude Code nodig heeft om het project stap voor sta
 - Wijzigt er iets aan de werkwijze of de commando's? Laat Claude Code `CLAUDE.md` bijwerken.
 
 ## Let op
-- De SQL is nog nooit tegen een echte database gedraaid; taak T-001 doet dat als eerste.
 - Er zit geen Fragrantica-data in en er wordt niet gescrapet. Zie `docs/DATA-SOURCES.md`.
 - Controleer licenties en laat het databankrecht beoordelen voordat je publiek gaat.

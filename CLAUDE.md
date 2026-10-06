@@ -83,5 +83,4 @@ prototype/           the original single-file prototype (reference only)
 4. No secrets, no copied third-party text or images.
 
 ## Known gaps
-- The SQL in `db/migrations/` was never run against a real PostgreSQL. Task T-001 does that first.
 - The perfume filter in `pipeline/perfume_filter.py` is a heuristic; tune it on real data (T-010).
