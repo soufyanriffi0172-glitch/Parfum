@@ -1,0 +1,18 @@
+# secrets and local config
+.env
+.env.*
+!.env.example
+CLAUDE.local.md
+
+# python
+__pycache__/
+*.pyc
+
+# node
+node_modules/
+.next/
+
+# big data files (never commit dumps or generated staging files)
+*.nq
+*.nq.gz
+staging*.csv

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scentshelf – your perfume collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ 1. DESIGN TOKENS ============ */
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F3F5F6; --surface:#FFFFFF; --soft:#E7EBEE; --ink:#1B2230; --muted:#667280;
+  --line:#D9DFE4; --accent:#3B2F5E; --accent-ink:#FFFFFF; --warn:#B4691F; --good:#2F7D6B;
+  --serif:'Bodoni Moda','Didot','Bodoni 72',Georgia,serif;
+  --sans:'Jost','Avenir Next','Futura','Segoe UI',system-ui,sans-serif;
+  --aura:#C9B8D6;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#10141A;--surface:#181E26;--soft:#222A34;--ink:#EDF0F3;--muted:#98A3AE;--line:#2B3540;--accent:#CDBFF0;--accent-ink:#171226;--warn:#E3A25B;--good:#6CC3AE}
+}
+:root[data-theme="dark"]{--bg:#10141A;--surface:#181E26;--soft:#222A34;--ink:#EDF0F3;--muted:#98A3AE;--line:#2B3540;--accent:#CDBFF0;--accent-ink:#171226;--warn:#E3A25B;--good:#6CC3AE}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-text-size-adjust:100%}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:500;margin:0;line-height:1.15}
+a{color:inherit;text-decoration:none}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:960px;margin:0 auto;padding:0 18px 80px}
+.narrow{max-width:700px;margin:0 auto}
+
+/* ============ 2. LAYOUT ============ */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:960px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px}
+.logo{font:500 24px/1 var(--serif);margin-right:auto}
+.tabs{display:flex;gap:2px}
+.tab{padding:7px 14px;border-radius:999px;font-weight:500;color:var(--muted)}
+.tab[aria-current="page"]{background:var(--soft);color:var(--ink)}
+.icon-btn{border:1px solid var(--line);background:var(--surface);width:34px;height:34px;border-radius:50%}
+
+.page-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:34px 0 14px}
+.page-h h2{font-size:26px}
+.page-h small{color:var(--muted)}
+.back{display:inline-block;margin:20px 0 0;color:var(--muted);font-size:15px}
+
+/* ============ 3. SHELF DASHBOARD ============ */
+.strip{display:flex;flex-wrap:wrap;gap:0;margin:26px 0 6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip>div{flex:1 1 140px;padding:14px 4px 14px 0}
+.strip b{display:block;font:500 28px/1.1 var(--serif)}
+.strip span{font-size:14px;color:var(--muted)}
+.shelf{display:flex;gap:6px;overflow-x:auto;padding:8px 0 0;scroll-snap-type:x proximity;border-bottom:6px solid var(--soft);align-items:flex-end}
+.slot{flex:0 0 132px;scroll-snap-align:start;padding:8px 8px 12px;text-align:center}
+.slot svg{width:64px;height:96px;display:block;margin:0 auto 8px}
+.slot .nm{display:block;font:500 15px/1.25 var(--serif)}
+.slot .br{display:block;font-size:13px;color:var(--muted)}
+.slot .lv{display:block;font-size:13px;margin-top:4px}
+.slot .lv.low{color:var(--warn);font-weight:500}
+.slot.add{align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;color:var(--muted);font-size:14px;border:1px dashed var(--line);border-radius:12px;margin-bottom:12px;flex-basis:110px}
+.slot.add i{font-style:normal;font-size:26px;line-height:1}
+.profile{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:6px 0 12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.low-list{display:grid;gap:8px}
+.low-list a{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.low-list small{color:var(--warn)}
+
+/* ============ 4. DISCOVER ============ */
+.search{width:100%;padding:14px 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:17px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.controls{display:grid;gap:12px;margin:22px 0 4px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:6px 14px;border-radius:999px;font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+select.chip{padding-right:8px}
+.price-r{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.price-r input{accent-color:var(--accent);width:150px}
+.list{display:grid;gap:0}
+.rcard{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
+.rcard svg{width:64px;height:96px}
+.rcard h3{font-size:21px}
+.rcard .br{font-size:14px;color:var(--muted)}
+.feel{margin:6px 0 8px;font:italic 400 16px/1.45 var(--serif);color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:14px}
+.flow .sep{color:var(--muted)}
+.nd i,.pill i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.meta{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:8px;font-size:14px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:500}
+.tag{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-left:6px;vertical-align:middle;font-family:var(--sans)}
+.tag.soft{background:var(--soft);color:var(--muted)}
+.why{font-size:14px;color:var(--muted);margin-top:6px}
+.empty{padding:28px 16px;border:1px dashed var(--line);border-radius:var(--r);color:var(--muted);text-align:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:10px 18px;border-radius:999px;font-weight:500}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--warn)}
+
+/* ============ 5. FRAGRANCE PAGE ============ */
+.hero{position:relative;text-align:center;padding:26px 0 18px;overflow:hidden}
+.aura{position:absolute;left:50%;top:6px;width:340px;height:340px;margin-left:-170px;border-radius:50%;background:var(--aura);filter:blur(58px);opacity:.5}
+.hero>*{position:relative}
+.hero svg{width:116px;height:174px}
+.hero .brand{margin-top:14px;font-size:16px;color:var(--muted);letter-spacing:.04em}
+.hero h1{font-size:clamp(36px,9vw,60px);font-weight:500;margin:4px 0 10px;letter-spacing:-.01em}
+.hero .spec{font-size:14px;color:var(--muted)}
+.hero .feel{display:block;max-width:520px;margin:18px auto 0;font-size:clamp(19px,4.6vw,24px);-webkit-line-clamp:unset}
+.actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px 0 0}
+.sec{margin:46px 0 0}
+.sec>h2{font-size:28px;margin-bottom:6px}
+.sec>p.lead{margin:0 0 18px;color:var(--muted)}
+
+.tl{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px 18px}
+.tl svg{display:block;width:100%;height:auto}
+.tl .ax{fill:var(--muted);font:12px var(--sans)}
+.scrub{display:flex;align-items:center;gap:12px;margin:2px 0 8px}
+.scrub input{flex:1;accent-color:var(--accent)}
+.scrub output{min-width:62px;text-align:right;font:500 20px/1 var(--serif)}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.now{padding:12px 4px 0;border-top:1px solid var(--line);margin-top:10px;min-height:68px}
+.now small{color:var(--muted);display:block;margin-bottom:6px}
+.pill{display:inline-block;padding:3px 11px;border-radius:999px;border:1px solid var(--line);margin:0 6px 6px 0;font-size:14px;transition:opacity .15s}
+.phases{display:grid;gap:10px;margin-top:16px}
+@media(min-width:720px){.phases{grid-template-columns:repeat(3,1fr)}}
+.phase{padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--surface);transition:border-color .2s,box-shadow .2s}
+.phase.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.phase h4{font-size:19px}
+.phase .when{font-size:13px;color:var(--muted);margin-bottom:6px}
+.phase p{margin:0 0 8px;font-size:15px}
+
+.dur{display:grid;gap:22px}
+@media(min-width:720px){.dur{grid-template-columns:200px 1fr;align-items:center}}
+.dur .big{font:500 56px/1 var(--serif)}
+.dur .big small{font-size:22px}
+.dur .lbl{color:var(--muted);margin-top:6px;font-size:15px}
+.votes{display:grid;gap:8px}
+.vrow{display:grid;grid-template-columns:128px 1fr 40px;gap:10px;align-items:center;font-size:14px}
+.vbar{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.vbar i{display:block;height:100%;background:var(--muted);opacity:.55;border-radius:5px}
+.vrow.top .vbar i{background:var(--accent);opacity:1}
+.vrow.top{font-weight:500}
+.dots{display:flex;gap:6px;margin:6px 0}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.dots.t i{border-radius:3px;width:34px;height:8px;background:var(--soft)}
+.dots.t i.on{background:var(--accent)}
+dl.plate{display:grid;grid-template-columns:auto 1fr;gap:0 22px;margin:0;border-top:1px solid var(--line)}
+dl.plate dt,dl.plate dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0}
+dl.plate dt{color:var(--muted)}
+.own-box{border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;background:var(--surface)}
+.own-box input[type=range]{width:100%;accent-color:var(--accent)}
+.mini{display:grid;gap:8px}
+.mini a{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.mini small{color:var(--muted);display:block}
+details.data{margin-top:44px;color:var(--muted);font-size:14px}
+details.data textarea{width:100%;min-height:90px;margin:10px 0;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font:13px/1.4 ui-monospace,Menlo,monospace}
+.foot{margin-top:28px;color:var(--muted);font-size:13px}
+.banner{margin:18px 0 0;padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:30;font-size:14px;display:none}
+.toast.on{display:block}
+
+/* photos (real bottle images; no generated bottles) */
+.ph{background:#fff;border:1px solid var(--line);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
+.ph img{width:100%;height:100%;object-fit:contain;display:block}
+.ph .phn{font:500 28px var(--serif);color:#9AA5AF}
+.ph.sm{width:64px;height:96px}
+.ph.md{width:72px;height:108px;margin:0 auto 8px}
+.ph.lg{width:170px;height:224px;margin:0 auto}
+.gauge{position:absolute;right:4px;top:6px;bottom:6px;width:5px;border-radius:3px;background:rgba(0,0,0,.09);overflow:hidden;display:flex;align-items:flex-end}
+.gauge i{display:block;width:100%;border-radius:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* discover: layout + filters */
+.dgrid{display:grid;gap:22px;margin-top:14px}
+.fpanel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 16px 12px}
+.fhead{display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;font:500 20px var(--serif)}
+.fg{border-bottom:1px solid var(--line);padding:12px 0}
+.fg>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:500}
+.fg>summary::-webkit-details-marker{display:none}
+.fg>summary::after{content:'+';color:var(--muted);font-size:18px}
+.fg[open]>summary::after{content:'–'}
+.cnt{margin-left:8px;background:var(--accent);color:var(--accent-ink);font-size:12px;border-radius:999px;padding:0 7px;margin-right:auto}
+.fg .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fopt{border:1px solid var(--line);background:var(--bg);padding:5px 12px;border-radius:999px;font-size:14px}
+.fopt small{opacity:.6;margin-left:6px;font-size:12px}
+.fopt i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.fopt[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.fopt[disabled]{opacity:.35;cursor:default}
+.search.sm{padding:9px 14px;font-size:15px}
+.ffoot{display:none;gap:8px;padding-top:12px}
+.ffoot .btn.pri{flex:1}
+.fhead .icon-btn,.fbtn,.fscrim{display:none}
+.rbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.rbar h2{font-size:24px}
+.active{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 4px}
+.achip{border:1px solid var(--accent);background:transparent;color:var(--ink);padding:3px 12px;border-radius:999px;font-size:14px}
+.linkbtn{border:0;background:none;color:var(--muted);text-decoration:underline;padding:4px 6px;font-size:14px}
+@media(min-width:900px){
+  .dgrid{grid-template-columns:270px 1fr;align-items:start}
+  .fpanel{position:sticky;top:calc(70px + env(safe-area-inset-top,0px));max-height:calc(100vh - 96px);overflow:auto}
+}
+@media(max-width:899px){
+  .fbtn{display:inline-block}
+  .fpanel{position:fixed;left:0;right:0;bottom:0;z-index:25;max-height:86%;overflow:auto;border-radius:20px 20px 0 0;padding:4px 18px calc(14px + env(safe-area-inset-bottom,0px));transform:translateY(105%);visibility:hidden;transition:transform .25s,visibility .25s}
+  .fhead .icon-btn{display:block}
+  .ffoot{display:flex;position:sticky;bottom:0;background:var(--surface);padding-bottom:4px}
+  .fp-open .fpanel{transform:none;visibility:visible}
+  .fp-open .fscrim{display:block;position:fixed;inset:0;background:rgba(10,14,18,.5);z-index:24}
+}
+
+/* seasons */
+.sart{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.shero{position:relative;overflow:hidden;border-radius:26px;padding:30px 26px 28px;min-height:240px;margin-top:18px;background:linear-gradient(135deg,var(--s1),var(--s2));color:var(--si);display:flex;align-items:flex-end}
+.sh-in{position:relative;max-width:62%}
+.shero h1{font-size:clamp(60px,15vw,132px);line-height:.88;letter-spacing:-.02em;margin:8px 0 12px;font-weight:500}
+.shero p{margin:0 0 14px;font-size:17px;opacity:.92}
+.sh-stats{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px}
+.sh-stats b{font:500 21px var(--serif);margin-right:4px}
+.nowpill{display:inline-block;font-size:13px;padding:2px 12px;border-radius:999px;background:var(--si);color:var(--s1)}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+@media(min-width:720px){.sgrid{grid-template-columns:repeat(4,1fr)}}
+.stile{position:relative;overflow:hidden;text-align:left;border:0;border-radius:16px;padding:12px 14px;min-height:78px;background:linear-gradient(135deg,var(--s1),var(--s2));color:var(--si);display:flex;flex-direction:column;justify-content:flex-end;gap:2px;transition:box-shadow .18s,opacity .18s}
+.stile>*{position:relative}
+.stile>.sart{position:absolute}
+.stile b{font:500 20px/1.05 var(--serif)}
+.stile span,.stile small{font-size:13px;opacity:.92}
+.stile[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.stile[disabled]{opacity:.38;cursor:default}
+.stile.big{min-height:130px}
+.stile.big b{font-size:28px}
+.pips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pips i{width:10px;height:10px;border-radius:50%;background:var(--si)}
+.pips em{font-style:normal;font-size:12px;opacity:.75}
+.stile .nowtag{position:absolute;top:10px;right:10px;font-style:normal;font-size:12px;background:var(--si);color:var(--s1);border-radius:999px;padding:0 9px}
+.stiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sd{display:inline-flex;gap:3px;align-items:center;vertical-align:middle}
+.sd i{width:9px;height:9px;border-radius:50%}
+.slot .sd{justify-content:center;margin-top:4px}
+.shelf.dim .slot{opacity:.55}
+details.oos{margin-top:18px}
+details.oos>summary{cursor:pointer;color:var(--muted);padding:6px 0}
+.sbanner{position:relative;overflow:hidden;border-radius:22px;padding:22px 24px;min-height:130px;margin-bottom:16px;background:linear-gradient(135deg,var(--s1),var(--s2));color:var(--si);display:flex;align-items:flex-end}
+.sb-in{position:relative;max-width:65%}
+.sbanner h2{font-size:clamp(40px,9vw,68px);line-height:.95}
+.sbanner p{margin:6px 0 0;opacity:.92}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="logo" href="#/">Scentshelf</a>
+  <nav class="tabs" aria-label="Main"><a class="tab" id="t-shelf" href="#/">My shelf</a><a class="tab" id="t-discover" href="#/discover">Discover</a></nav>
+  <button class="icon-btn" id="theme" aria-label="Toggle dark mode">◐</button>
+</div></header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =====================================================================
+   SCENTSHELF v2 — structure
+   1. Scent knowledge   (note families, colours, wording)
+   2. Data source       (schema + adapter: swap RAW for an API later)
+   3. Store             (versioned storage, migration, backup/restore)
+   4. Domain            (duration from reviews, scent curves, similarity)
+   5. Views             (pure functions that return HTML)
+   6. Router + events   (hash routes: #/ , #/discover , #/p/<id>)
+   ===================================================================== */
+
+/* ---------- 1. SCENT KNOWLEDGE ---------- */
+const FAMILIES={ // family: [colour, ...notes]
+  citrus:['#F0C94A','bergamot','grapefruit','lemon','orange','mandarin','blood mandarin'],
+  fruit:['#F08C54','pineapple','apple','green apple','pear','plum','dates','tropical fruit','blackcurrant'],
+  floral:['#E58DB5','jasmine','rose','ylang-ylang','orange blossom','tuberose','freesia','orchid','iris','geranium','neroli','heliotrope','violet'],
+  spice:['#C8533A','pepper','cinnamon','cardamom','clove','nutmeg','saffron','licorice','ginger','elemi'],
+  aromatic:['#7DAA6A','lavender','mint','rosemary','sage'],
+  wood:['#9A6C47','cedar','sandalwood','vetiver','rosewood','guaiac wood','patchouli','oakmoss','oud','cashmeran'],
+  amber:['#D9953A','amber','ambroxan','ambergris','incense','labdanum','fir resin'],
+  sweet:['#E5B07A','vanilla','tonka','praline','cocoa','honey','almond','coffee','chestnut'],
+  musk:['#CBBFD3','musk'],
+  smoke:['#6A5C75','tobacco','leather','birch'],
+  marine:['#5CA9D1','sea notes'],
+  fresh:['#9BD3CC','aldehydes','bamboo']
+};
+const NOTE_FAM={},FCOL={};
+Object.entries(FAMILIES).forEach(([f,[c,...ns]])=>{FCOL[f]=c;ns.forEach(n=>NOTE_FAM[n]=f)});
+const noteFam=n=>NOTE_FAM[n]||'wood';
+const noteCol=n=>FCOL[noteFam(n)];
+const ADJ={
+ top:{citrus:'Bright and zesty',fruit:'Juicy and sparkling',floral:'Fresh petals',spice:'Peppery and warm',aromatic:'Cool and herbal',wood:'Dry and green',amber:'Soft and resinous',sweet:'Sweet and inviting',musk:'Clean and airy',smoke:'Smoky from the first spray',marine:'Salty and airy',fresh:'Crisp and clean'},
+ heart:{citrus:'Citrus softening',fruit:'Ripe fruit settling in',floral:'Flowers blooming',spice:'Spice warming up',aromatic:'Herbs rounding out',wood:'Woods emerging',amber:'A resinous glow',sweet:'Sweetness deepening',musk:'Soft, skin-like musk',smoke:'Smoke and leather arriving',marine:'Sea air lingering',fresh:'Clean, powdery softness'},
+ base:{citrus:'A faint citrus echo',fruit:'Dried fruit lingering',floral:'A floral trail',spice:'Warm spice lingering',aromatic:'A herbal trace',wood:'Dry, grounded woods',amber:'Warm, glowing amber',sweet:'Creamy, lingering sweetness',musk:'Soft musk against the skin',smoke:'Dark smoke and leather',marine:'Salt-washed skin',fresh:'Clean powder'}
+};
+const VOTE_LABELS=[['Very weak','~1 h'],['Weak','2–3 h'],['Moderate','4–6 h'],['Long lasting','7–9 h'],['Eternal','10 h+']];
+const VOTE_HOURS=[1,2.5,5,8,12];
+const PROJ=['','Skin scent','Soft','Moderate','Strong','Room-filling'];
+/* Seasons (northern hemisphere). Score per fragrance: 0 not ideal, 1 possible, 2 good, 3 ideal. */
+const SEASON_KEYS=['spring','summer','autumn','winter'];
+const SEASONS={
+  spring:{label:'Spring',months:[2,3,4],c1:'#F6C9DA',c2:'#CDE8BF',ink:'#2B3A2E',dot:'#E58DB5',tag:'Light florals, green notes and bright citrus'},
+  summer:{label:'Summer',months:[5,6,7],c1:'#FFD66B',c2:'#67CBD1',ink:'#12323A',dot:'#F5A524',tag:'Fresh, citrusy and aquatic'},
+  autumn:{label:'Autumn',months:[8,9,10],c1:'#6E2A1F',c2:'#D98A3D',ink:'#FFF3E4',dot:'#D9731F',tag:'Warm spice, woods and amber'},
+  winter:{label:'Winter',months:[11,0,1],c1:'#1F3157',c2:'#7FA5D6',ink:'#FFFFFF',dot:'#5B7FC0',tag:'Rich, sweet and smoky'}
+};
+const NOW=SEASON_KEYS.find(k=>SEASONS[k].months.includes(new Date().getMonth()));
+const SCORE_LABEL=['Not ideal','Possible','Good','Ideal'];
+const S_OPACITY=[0.14,0.4,0.75,1];
+const CHARS=[ // scent character shown right after season in the filters
+  ['sweet','Sweet',['sweet'],'#E5B07A'],['fresh','Fresh',['citrus','marine','fresh','aromatic'],'#7FC8C0'],
+  ['fruity','Fruity',['fruit'],'#F08C54'],['floral','Floral',['floral'],'#E58DB5'],['spicy','Spicy',['spice'],'#C8533A'],
+  ['woody','Woody',['wood'],'#9A6C47'],['warm','Warm & amber',['amber'],'#D9953A'],['smoky','Smoky',['smoke'],'#6A5C75'],['musky','Musky',['musk'],'#CBBFD3']
+];
+function seasonArt(k){
+  const T=(x,y,r,sc)=>`translate(${x} ${y}) rotate(${r}) scale(${sc})`;let g='';
+  if(k==='autumn'){
+    [[250,32,20,1.3,'#F2C14E'],[205,82,-35,1.7,'#F28C28'],[272,88,50,1.2,'#7A2218'],[160,34,-10,1.1,'#C9472B'],[228,12,70,.8,'#F28C28'],[292,56,-60,1,'#F2C14E'],[140,92,30,1,'#F2C14E'],[184,56,100,.7,'#7A2218']]
+    .forEach(([x,y,r,sc,c])=>g+=`<g transform="${T(x,y,r,sc)}"><path d="M0-14C10-10 13 0 0 16-13 0-10-10 0-14Z" fill="${c}"/><path d="M0-12V22" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/></g>`);
+  }else if(k==='spring'){
+    [[250,36,10,1.5,'#E58DB5'],[196,82,40,1.2,'#F2A7C5'],[276,92,0,1,'#FFFFFF'],[160,30,20,.9,'#F2A7C5'],[226,104,0,.7,'#E58DB5'],[140,86,15,.8,'#FFFFFF']]
+    .forEach(([x,y,r,sc,c])=>g+=`<g transform="${T(x,y,r,sc)}">${[0,72,144,216,288].map(a=>`<circle cx="${(9*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(9*Math.sin(a*Math.PI/180)).toFixed(1)}" r="7" fill="${c}"/>`).join('')}<circle r="4.5" fill="#FFD66B"/></g>`);
+    [[215,40,-30],[270,62,40],[170,60,20]].forEach(([x,y,r])=>g+=`<ellipse transform="${T(x,y,r,1)}" rx="12" ry="5" fill="#7DB36B" opacity=".85"/>`);
+  }else if(k==='summer'){
+    g+=`<g transform="translate(250 42)"><circle r="22" fill="#FFB627"/>${Array.from({length:12},(_,i)=>`<line y1="-30" y2="-40" stroke="#FFB627" stroke-width="3.5" stroke-linecap="round" transform="rotate(${i*30})"/>`).join('')}</g>`;
+    [[96,'#FFFFFF',.6],[108,'#1F9FAA',.5]].forEach(([y,c,o])=>g+=`<path d="M110 ${y}q15-10 30 0t30 0t30 0t30 0t30 0t30 0" fill="none" stroke="${c}" stroke-width="3.5" stroke-linecap="round" opacity="${o}"/>`);
+  }else{
+    [[250,34,0,1.5],[196,82,15,1.1],[276,92,30,.8],[160,30,10,.8],[226,104,0,.6],[140,86,20,.9],[288,20,0,.6]]
+    .forEach(([x,y,r,sc])=>g+=`<g transform="${T(x,y,r,sc)}" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".92"><path d="M-14 0H14M-7-12.1L7 12.1M-7 12.1L7-12.1"/><circle r="2" fill="#fff"/></g>`);
+    [[120,20],[180,12],[300,70],[210,60],[260,112]].forEach(([x,y])=>g+=`<circle cx="${x}" cy="${y}" r="2" fill="#fff" opacity=".7"/>`);
+  }
+  return `<svg class="sart" viewBox="0 0 300 120" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">${g}</svg>`;
+}
+const sVars=k=>`--s1:${SEASONS[k].c1};--s2:${SEASONS[k].c2};--si:${SEASONS[k].ink}`;
+
+
+/* ---------- 2. DATA SOURCE ---------- */
+/* Row = [id,name,brand,year,gender,price€,size ml,rating,projection 1-5,sprays,accords,top,heart,base,"smells like",[review votes: very weak,weak,moderate,long,eternal], optional bottle image (data: URI or /_blob/ asset)]
+   Sample/illustrative values. To go live: implement Source.all() with fetch('/api/fragrances') returning the same shape. */
+const RAW=[
+[1,"Sauvage EDT","Dior",2015,"M",98,100,4.0,4,3,"fresh spicy|aromatic|woody","bergamot|pepper","lavender|geranium|elemi","ambroxan|cedar|labdanum","Cool desert air, cracked pepper and clean laundry drying on a sunny rooftop.",[60,180,520,260,40]],
+[2,"Bleu de Chanel EDP","Chanel",2014,"M",125,100,4.3,3,3,"citrus|woody|aromatic","grapefruit|lemon|mint","ginger|nutmeg|jasmine","incense|cedar|sandalwood","A crisp white shirt, citrus peel and the hush of a stone cathedral.",[20,90,400,420,70]],
+[3,"Acqua di Giò Profumo","Armani",2015,"M",95,75,4.2,3,3,"marine|aromatic|woody","bergamot|sea notes","rosemary|sage","patchouli|incense","Sea spray on warm rock, wild rosemary on the cliff above the water.",[25,110,420,380,65]],
+[4,"Aventus","Creed",2010,"M",345,100,4.3,4,3,"fruity|smoky|woody","pineapple|bergamot|blackcurrant","birch|jasmine|rose","musk|oakmoss|ambergris","Crushed pineapple and smoking birch: a sharp suit on a bright morning.",[30,120,380,360,110]],
+[5,"Club de Nuit Intense Man","Armaf",2015,"M",35,105,4.0,4,3,"citrus|fruity|smoky","lemon|pineapple|bergamot","birch|jasmine|rose","musk|ambergris|vanilla","Lemon zest thrown on a campfire: loud, bright and unapologetic.",[20,90,330,430,130]],
+[6,"Khamrah","Lattafa",2022,"U",30,100,4.3,4,3,"sweet|warm spicy|gourmand","cinnamon|nutmeg|bergamot","dates|praline|tuberose","vanilla|tonka|amber","Cinnamon-dusted dates and warm praline, like a bakery on a cold evening.",[8,40,230,500,222]],
+[7,"Libre EDP","YSL",2019,"F",105,90,4.2,4,3,"lavender|floral|vanilla","lavender|mandarin","orange blossom|jasmine","vanilla|musk|cedar","Lavender draped over orange blossom and soft vanilla: effortless, a little rebellious.",[35,140,430,330,65]],
+[8,"No. 5 EDP","Chanel",1921,"F",135,100,4.1,3,2,"aldehydic|floral|powdery","aldehydes|neroli|ylang-ylang","jasmine|rose|iris","vanilla|musk|sandalwood","Powdery white flowers glowing through champagne-bright aldehydes: polished and timeless.",[45,170,430,290,65]],
+[9,"La Vie Est Belle","Lancôme",2012,"F",100,100,4.1,4,3,"sweet|iris|gourmand","pear|blackcurrant","iris|jasmine|orange blossom","praline|vanilla|patchouli|tonka","Sweet pear and iris melting into warm, caramelised praline.",[20,90,360,420,110]],
+[10,"Baccarat Rouge 540","Maison Francis Kurkdjian",2015,"U",285,70,4.3,5,2,"amber|woody|sweet","saffron|jasmine","ambergris|amber","cedar|fir resin|musk","Spun sugar and saffron over warm cedar: a glowing, airy trail.",[10,40,180,450,320]],
+[11,"Asad","Lattafa",2021,"M",28,100,4.0,4,3,"spicy|vanilla|woody","pepper|pineapple","tobacco|coffee","vanilla|patchouli|amber","Dark tobacco and pepper wrapped in sweet vanilla: night-out confidence.",[12,50,260,450,228]],
+[12,"Homme Intense","Dior",2011,"M",110,100,4.4,3,3,"iris|powdery|woody","lavender|pear","iris|cocoa","vetiver|cedar|amber","Cool powdery iris and dark cocoa: a velvet jacket after dusk.",[15,70,330,440,145]],
+[13,"Oud Wood","Tom Ford",2007,"U",240,100,4.3,3,2,"oud|woody|spicy","rosewood|cardamom|pepper","oud|sandalwood","vanilla|amber|tonka","Smooth dark oud with cardamom and sandalwood: polished, quiet luxury.",[15,70,330,430,155]],
+[14,"Eros EDT","Versace",2012,"M",70,100,3.9,4,3,"fresh|sweet|vanilla","mint|green apple|lemon","tonka|geranium","vanilla|cedar|oakmoss","Ice-cold mint and green apple melting into sweet vanilla: club-night energy.",[80,220,450,220,30]],
+[15,"1 Million","Rabanne",2008,"M",85,100,3.8,4,3,"sweet|warm spicy|leather","blood mandarin|grapefruit|mint","cinnamon|rose","leather|amber|patchouli","Sweet mandarin and cinnamon on warm leather: flashy and unmistakable.",[90,230,430,210,40]],
+[16,"Le Male Elixir","Jean Paul Gaultier",2023,"M",100,125,4.3,4,3,"vanilla|sweet|aromatic","mint|lavender","honey|tobacco","tonka|vanilla|amber","A barbershop dipped in dessert: fresh mint and lavender sinking into honeyed tobacco.",[10,40,210,470,270]],
+[17,"Cedrat Boise","Mancera",2011,"U",140,120,4.2,4,3,"citrus|fruity|woody","bergamot|lemon|blackcurrant","leather|jasmine","cedar|vanilla|musk","Sparkling citrus cut with blackcurrant, settling over smooth leather and cedar.",[20,80,330,420,150]],
+[18,"Hacivat","Nishane",2017,"U",190,100,4.3,4,3,"fruity|woody|fresh","pineapple|grapefruit|bergamot","jasmine|cedar","oakmoss|patchouli|musk","Juicy pineapple over mossy woods: a sunlit forest just after rain.",[15,70,330,430,155]],
+[19,"9PM","Afnan",2020,"M",32,100,4.0,4,3,"vanilla|sweet|warm spicy","apple|cinnamon|bergamot","lavender|orange blossom","vanilla|tonka|amber","Spiced apple and lavender in a soft vanilla haze: cosy and sweet.",[15,60,270,450,205]],
+[20,"Hawas","Rasasi",2015,"M",38,100,4.1,4,3,"aquatic|fruity|fresh","apple|bergamot|lemon","cinnamon|plum|orange blossom","ambergris|musk|cedar","Crisp apple and ocean breeze with a pinch of cinnamon: clean and sporty.",[30,120,400,360,90]],
+[21,"L'Homme","Prada",2016,"M",90,100,4.2,2,3,"iris|powdery|woody","neroli|geranium|pepper","iris|patchouli","amber|cedar|musk","Soft powdery iris and neroli: the clean calm of a freshly pressed shirt.",[50,180,450,270,50]],
+[22,"Good Girl","Carolina Herrera",2016,"F",98,80,4.0,4,3,"sweet|tuberose|gourmand","almond|coffee|bergamot","tuberose|jasmine|orange blossom","tonka|cocoa|sandalwood","Dark almond and coffee over creamy tuberose: sweet, sultry and heavy.",[20,80,320,440,140]],
+[23,"Yara","Lattafa",2022,"F",25,100,4.1,4,3,"sweet|vanilla|powdery","orchid|mandarin|heliotrope","heliotrope|tropical fruit","vanilla|musk|sandalwood","Juicy tropical fruit and soft orchid on a vanilla-musk cloud: candy-floss soft.",[25,100,350,400,125]],
+[24,"By the Fireplace","Maison Margiela",2015,"U",130,100,4.3,3,3,"smoky|warm spicy|woody","clove|orange|pepper","chestnut|guaiac wood","vanilla|cashmeran|amber","Chestnuts roasting on a log fire: smoky, warm and homely.",[20,90,380,400,110]],
+[25,"Naxos","Xerjoff",2015,"U",220,100,4.5,4,2,"honey|tobacco|sweet","lavender|bergamot|lemon","honey|jasmine|cinnamon","tobacco|vanilla|tonka","Honeyed tobacco and lavender: warm golden light in an old library.",[8,35,180,430,347]],
+[26,"Explorer","Montblanc",2019,"M",60,100,4.0,3,3,"woody|aromatic|fresh","bergamot|pepper","patchouli|leather","vetiver|ambroxan|cedar","Fresh bergamot over vetiver and leather: a brisk hike in mountain air.",[40,140,430,330,60]],
+[27,"Light Blue","Dolce & Gabbana",2001,"F",85,100,3.9,3,3,"citrus|fresh|woody","lemon|apple|bamboo","jasmine|rose","cedar|musk|amber","Sicilian lemon and green apple on a sunny Mediterranean terrace.",[120,300,400,150,30]],
+[28,"Sì","Armani",2013,"F",100,100,4.0,3,3,"sweet|powdery|fruity","blackcurrant|mandarin","rose|freesia","vanilla|patchouli|musk","Blackcurrant and rose over soft vanilla: elegant, powdery and evening-ready.",[25,100,380,400,95]],
+[29,"Coco Mademoiselle","Chanel",2001,"F",125,100,4.2,3,3,"citrus|patchouli|floral","orange|bergamot","jasmine|rose","patchouli|vetiver|vanilla|musk","Fresh orange and rose over dry patchouli: polished, modern, effortless.",[25,100,370,410,95]],
+[30,"Layton","Parfums de Marly",2016,"U",215,125,4.4,4,3,"vanilla|fruity|woody","apple|bergamot","lavender|geranium|jasmine","vanilla|cardamom|sandalwood|musk","Baked apple, lavender and warm vanilla woods: smooth and addictive.",[10,50,260,460,220]],
+[31,"Sauvage Elixir","Dior",2021,"M",150,60,4.4,5,2,"warm spicy|aromatic|woody","cinnamon|nutmeg|cardamom","lavender|licorice","sandalwood|amber|patchouli","Cinnamon, licorice and sandalwood: a concentrated, spicy-sweet echo of the original.",[5,25,160,430,380]]
+];
+
+
+/* Season suitability per fragrance id: [spring, summer, autumn, winter]. Missing ids are derived from their notes. */
+const SEASON_SCORES={1:[2,3,2,1],2:[2,2,3,2],3:[2,3,2,1],4:[3,2,2,1],5:[2,2,3,2],6:[0,0,3,3],7:[3,1,3,2],8:[3,1,2,3],9:[2,0,3,3],10:[1,1,3,3],11:[0,0,3,3],12:[1,0,3,3],13:[0,0,3,3],14:[2,3,1,0],15:[1,1,2,3],16:[0,0,3,3],17:[3,3,2,1],18:[3,3,2,0],19:[0,0,3,3],20:[2,3,1,0],21:[3,1,3,1],22:[1,0,3,3],23:[3,2,2,1],24:[0,0,2,3],25:[0,0,3,3],26:[3,2,3,1],27:[3,3,0,0],28:[2,0,3,3],29:[3,2,3,2],30:[1,0,3,3],31:[0,0,3,3]};
+function deriveSeasons(p){
+  const has=(...a)=>a.some(x=>p.fams.includes(x));let v=[1,1,1,1];
+  if(has('citrus','marine','fresh'))v=[v[0]+1,v[1]+2,v[2],v[3]-1];
+  if(has('aromatic','fruit'))v=[v[0]+1,v[1]+1,v[2],v[3]];
+  if(has('floral'))v[0]+=1;
+  if(has('wood','spice'))v=[v[0],v[1]-1,v[2]+1,v[3]+1];
+  if(has('sweet','amber','smoke'))v=[v[0]-1,v[1]-1,v[2]+1,v[3]+2];
+  return v.map(x=>clamp(x,0,3));
+}
+const hex2=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function mix(cols,ws){const s=ws.reduce((a,b)=>a+b,0)||1,r=[0,0,0];cols.forEach((c,i)=>hex2(c).forEach((v,k)=>r[k]+=v*ws[i]/s));return '#'+r.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('')}
+const list=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const split=s=>s?String(s).split('|').filter(Boolean):[];
+
+/* normalize(): tolerant of missing fields, so new data never breaks the UI */
+function normalize(r){
+  const [id,name,brand,year,g,price,size,rating,sil,spr,acc,top,heart,base,feel,votes,img]=r;
+  const p={id,name,brand,year,g,price,size,rating:rating||0,sil:sil||3,spr:spr||3,acc:split(acc),feel:feel||'',img:img||null};
+  p.pyr={top:split(top),heart:split(heart),base:split(base)};
+  p.notes=[...p.pyr.top,...p.pyr.heart,...p.pyr.base];
+  p.fams=[...new Set(p.notes.map(noteFam))];
+  p.layers=['top','heart','base'].map(k=>{
+    const ns=p.pyr[k],fam=dominant(ns);
+    return{key:k,notes:ns,fam,col:ns.length?mix(ns.map(noteCol),ns.map(()=>1)):'#B8C0C8'};
+  });
+  p.seasons=SEASON_SCORES[id]||deriveSeasons(p);
+  p.votes=Array.isArray(votes)&&votes.length===5?votes:null;
+  p.reviews=p.votes?p.votes.reduce((a,b)=>a+b,0):0;
+  p.dur=p.reviews?p.votes.reduce((a,v,i)=>a+v*VOTE_HOURS[i],0)/p.reviews:null;
+  if(!p.feel&&p.notes.length)p.feel=`${ADJ.top[p.layers[0].fam]}, then ${ADJ.base[p.layers[2].fam].toLowerCase()}.`;
+  return p;
+}
+function dominant(ns){const c={};ns.forEach(n=>{const f=noteFam(n);c[f]=(c[f]||0)+1});return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||'wood'}
+const Source={ async all(){return RAW.map(normalize)} /* swap: return (await fetch('/api/fragrances')).json().then(rs=>rs.map(normalize)) */ };
+let P=[],byId={};
+
+/* ---------- 3. STORE ---------- */
+const Store={
+  KEY:'scentshelf-v2',OLD:'scentshelf-v1',
+  s:{v:2,owned:{},wish:[],demo:false,photos:{}},
+  load(){
+    try{
+      let r=localStorage.getItem(this.KEY);
+      if(r){this.s=Object.assign(this.s,JSON.parse(r));return}
+      const old=localStorage.getItem(this.OLD); // migrate v1 → v2
+      if(old){const o=JSON.parse(old);this.s.owned=o.owned||{};this.s.wish=o.wish||[];this.save();return}
+    }catch(e){}
+    this.s.owned={2:{ml:62,wears:14,last:null},6:{ml:88,wears:4,last:null},7:{ml:9,wears:31,last:null},11:{ml:100,wears:0,last:null}};
+    this.s.demo=true;
+  },
+  save(){try{localStorage.setItem(this.KEY,JSON.stringify(this.s));return true}catch(e){return false}},
+  exportJSON(){return JSON.stringify({app:'scentshelf',v:2,owned:this.s.owned,wish:this.s.wish})},
+  importJSON(t){const o=JSON.parse(t);if(o.app!=='scentshelf'||typeof o.owned!=='object')throw new Error('bad');this.s.owned=o.owned;this.s.wish=Array.isArray(o.wish)?o.wish:[];this.s.demo=false;this.save()}
+};
+
+/* ---------- 4. DOMAIN ---------- */
+const ML_PER_SPRAY=0.1;
+const sprays=o=>Math.floor(o.ml/ML_PER_SPRAY);
+const eur=n=>'€'+Math.round(n);
+const gl=g=>({M:'Men',F:'Women',U:'Unisex'}[g]||'');
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ss=x=>{x=clamp(x);return x*x*(3-2*x)};
+const durLabel=h=>h==null?'No reviews yet':h<3?'Weak':h<5.5?'Moderate':h<8?'Long lasting':'Very long lasting';
+const hrs=t=>t<1?`${Math.max(1,Math.round(t*60))} min`:`${+t.toFixed(1)} h`;
+function jac(a,b){const A=new Set(a),B=new Set(b);let i=0;A.forEach(x=>B.has(x)&&i++);const u=A.size+B.size-i;return u?i/u:0}
+const sim=(p,q)=>2*jac(p.acc,q.acc)+jac(p.notes,q.notes);
+const shared=(p,q)=>p.notes.filter(n=>q.notes.includes(n));
+function similarTo(p,n=4,cheaper=false){
+  return P.filter(q=>q.id!==p.id&&(!cheaper||q.price/q.size<p.price/p.size*0.7)).map(q=>({q,s:sim(p,q)})).filter(x=>x.s>0.5).sort((a,b)=>b.s-a.s).slice(0,n);
+}
+/* How strongly each layer is on the skin at time t (hours). D = average duration from reviews. */
+function levels(p,t){
+  const D=p.dur||6,A=0.55+0.09*p.sil;
+  const fade=1-ss((t-(D-1.5))/3);
+  return{
+    top:(1-ss(t/1.2))*fade*A,
+    heart:ss((t-0.1)/0.7)*(1-ss((t-1.5)/4.5))*fade*A,
+    base:ss((t-0.8)/3.2)*fade*A
+  };
+}
+function phaseText(p,k){
+  const L=p.layers.find(l=>l.key===k);if(!L||!L.notes.length)return'';
+  return `${ADJ[k==='top'?'top':k==='heart'?'heart':'base'][L.fam]}: ${list(L.notes)}.`;
+}
+
+/* ---------- 5. VIEWS ---------- */
+/* Real bottle photos only. No photo yet = neutral placeholder (never a drawn bottle). */
+const photoOf=p=>Store.s.photos[p.id]||p.img||null;
+function thumb(p,size,gauge){
+  const src=photoOf(p);
+  return `<div class="ph ${size}">${src?`<img src="${esc(src)}" alt="${esc(p.brand+' '+p.name)} bottle" loading="lazy">`:`<span class="phn" aria-hidden="true">${esc((p.brand||'?')[0])}</span>`}${gauge!=null?`<span class="gauge" title="Liquid left"><i style="height:${Math.round(clamp(gauge)*100)}%;background:linear-gradient(${p.layers[0].col},${p.layers[2].col})"></i></span>`:''}</div>`;
+}
+function readPhoto(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const m=520,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.86))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+const bestText=p=>{const m=Math.max(...p.seasons);return 'Best in '+list(SEASON_KEYS.filter((k,i)=>p.seasons[i]===m).map(k=>SEASONS[k].label.toLowerCase()))};
+const seasonDots=p=>`<span class="sd" title="${esc(bestText(p))}">${SEASON_KEYS.map((k,i)=>`<i style="background:${SEASONS[k].dot};opacity:${S_OPACITY[p.seasons[i]]}"></i>`).join('')}</span>`;
+const dot=n=>`<span class="nd"><i style="background:${noteCol(n)}"></i>${esc(n)}</span>`;
+function flow(p){
+  const f=p.layers.map(l=>l.notes[0]).filter(Boolean);
+  return `<div class="flow">${f.map(dot).join('<span class="sep">›</span>')}</div>`;
+}
+function badge(p){return Store.s.owned[p.id]?'<span class="tag">On your shelf</span>':Store.s.wish.includes(p.id)?'<span class="tag soft">Wishlist</span>':''}
+function resultCard(p,extra=''){
+  return `<a class="rcard" href="#/p/${p.id}">${thumb(p,'sm')}<div><h3>${esc(p.name)}${badge(p)}</h3><div class="br">${esc(p.brand)} · ${p.year} · ${gl(p.g)}</div>
+  <p class="feel">${esc(p.feel)}</p>${flow(p)}
+  <div class="meta"><span>${seasonDots(p)} ${esc(bestText(p))}</span><span>★ <b>${p.rating.toFixed(1)}</b></span><span>${p.dur?`<b>≈${p.dur.toFixed(1)} h</b> on skin`:'No reviews yet'}</span><span><b>${eur(p.price)}</b> · ${p.size} ml</span></div>${extra}</div></a>`;
+}
+
+/* --- Shelf (season-first) --- */
+let recCheap=false,SS=NOW;
+const SCORE=(p,k)=>p.seasons[SEASON_KEYS.indexOf(k)];
+function slotHTML(p,o){
+  const low=o.ml<=p.size*0.15;
+  return `<a class="slot" href="#/p/${p.id}">${thumb(p,'md',o.ml/p.size)}<span class="nm">${esc(p.name)}</span><span class="br">${esc(p.brand)}</span>${seasonDots(p)}<span class="lv ${low?'low':''}">${sprays(o)} sprays left</span></a>`;
+}
+function shelfView(){
+  const S=Store.s,K=SEASONS[SS],lc=K.label.toLowerCase();
+  const owned=Object.keys(S.owned).map(id=>({p:byId[id],o:S.owned[id]})).filter(x=>x.p),n=owned.length;
+  const mine=owned.filter(x=>SCORE(x.p,SS)>=2).sort((a,b)=>SCORE(b.p,SS)-SCORE(a.p,SS)||b.p.rating-a.p.rating);
+  const rest=owned.filter(x=>SCORE(x.p,SS)<2);
+  const totalSprays=owned.reduce((a,x)=>a+sprays(x.o),0);
+  const withDur=mine.filter(x=>x.p.dur),avgDur=withDur.length?withDur.reduce((a,x)=>a+x.p.dur,0)/withDur.length:0;
+  let h='';
+  if(S.demo&&n)h+=`<div class="banner"><span>Demo shelf. Add your own bottles from Discover.</span><button class="btn" data-clear-demo>Clear demo shelf</button></div>`;
+  h+=`<section class="shero" style="${sVars(SS)}">${seasonArt(SS)}<div class="sh-in">${SS===NOW?'<span class="nowpill">This season</span>':''}<h1>${K.label}</h1><p>${K.tag}</p><div class="sh-stats"><span><b>${mine.length}</b>of ${n} bottles suit ${lc}</span><span><b>${totalSprays.toLocaleString()}</b>sprays left in total</span>${avgDur?`<span><b>${avgDur.toFixed(1)} h</b>average on skin</span>`:''}</div></div></section>`;
+  h+=`<div class="sgrid" role="group" aria-label="Choose a season">${SEASON_KEYS.map(k=>{const c=owned.filter(x=>SCORE(x.p,k)>=2);return `<button class="stile big" data-season="${k}" aria-pressed="${k===SS}" style="${sVars(k)}">${seasonArt(k)}<b>${SEASONS[k].label}</b><span>${c.length} bottle${c.length===1?'':'s'}</span><span class="pips">${c.map(x=>`<i style="opacity:${SCORE(x.p,k)===3?1:.55}"></i>`).join('')||'<em>none yet</em>'}</span>${k===NOW?'<em class="nowtag">Now</em>':''}</button>`}).join('')}</div>`;
+  h+=`<div class="page-h"><h2>Your ${lc} rotation</h2><small>${mine.length} bottle${mine.length===1?'':'s'}</small></div>`;
+  h+=mine.length?`<div class="shelf">${mine.map(({p,o})=>slotHTML(p,o)).join('')}<a class="slot add" href="#/discover?season=${SS}"><i>+</i>Find more for ${lc}</a></div>`:`<div class="empty">No ${lc} bottles on your shelf yet.<br><a class="btn pri" href="#/discover?season=${SS}" style="display:inline-block;margin-top:12px">Browse ${lc} fragrances</a></div>`;
+  if(rest.length)h+=`<details class="oos"><summary>Out of season for ${lc} · ${rest.length}</summary><div class="shelf dim">${rest.map(({p,o})=>slotHTML(p,o)).join('')}</div></details>`;
+  const low=owned.filter(x=>x.o.ml<=x.p.size*0.15);
+  if(low.length)h+=`<div class="page-h"><h2>Running low</h2></div><div class="low-list">${low.map(({p,o})=>`<a href="#/p/${p.id}"><span>${esc(p.name)} <span style="color:var(--muted)">· ${esc(p.brand)}</span></span><small>${sprays(o)} sprays left</small></a>`).join('')}</div>`;
+  const recs=P.filter(q=>!S.owned[q.id]&&SCORE(q,SS)>=2&&(!recCheap||q.price<=50)).map(q=>{let best=null,bs=0;owned.forEach(({p})=>{const s=sim(p,q);if(s>bs){bs=s;best=p}});return{q,best,bs,sc:bs+SCORE(q,SS)*0.25+q.rating/10}}).sort((a,b)=>b.sc-a.sc).slice(0,5);
+  h+=`<div class="page-h"><h2>Add for ${lc}</h2><span class="row"><button class="chip" aria-pressed="${!recCheap}" data-rec="all">Any price</button><button class="chip" aria-pressed="${recCheap}" data-rec="cheap">Under €50</button></span></div>`;
+  h+=recs.length?`<div class="list">${recs.map(r=>resultCard(r.q,`<div class="why">Suits ${lc}${r.best&&r.bs>0.4?', close to '+esc(r.best.name):''}</div>`)).join('')}</div>`:`<div class="empty">No ${lc} picks at this price.</div>`;
+  if(n){
+    const cnt={};let tot=0;owned.forEach(x=>x.p.notes.forEach(nt=>{const f=noteFam(nt);cnt[f]=(cnt[f]||0)+1;tot++}));
+    const fams=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    h+=`<div class="page-h"><h2>What your shelf smells like</h2></div><div class="profile">${fams.map(([f,c])=>`<i style="flex:${c};background:${FCOL[f]}" title="${f}"></i>`).join('')}</div><div class="legend">${fams.slice(0,6).map(([f,c])=>`<span><i style="background:${FCOL[f]}"></i>${f} ${Math.round(c/tot*100)}%</span>`).join('')}</div>`;
+  }
+  const wl=S.wish.map(id=>byId[id]).filter(p=>p&&!S.owned[p.id]);
+  if(wl.length)h+=`<div class="page-h"><h2>Wishlist</h2></div><div class="list">${wl.map(p=>resultCard(p)).join('')}</div>`;
+  h+=`<details class="data"><summary>Back up or restore your shelf</summary><textarea id="bk" spellcheck="false" aria-label="Shelf backup">${esc(Store.exportJSON())}</textarea><div class="row"><button class="btn" data-copy>Copy backup</button><button class="btn" data-import>Restore from text</button></div></details>`;
+  return h;
+}
+
+/* --- Discover ---
+   Filters are DATA: to add a filter, add one object to FILTERS (key, label, mode, options, test).
+   State lives in the URL (#/discover?fam=woody,sweet&price=lt50&sort=dur), so searches are shareable
+   and the back button restores them. Option counts react to the other active filters. */
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const FILTERS=[
+ {key:'season',label:'Season',mode:'multi',visual:'season',options:()=>SEASON_KEYS.map(k=>[k,SEASONS[k].label]),test:(p,v)=>v.some(k=>SCORE(p,k)>=2)},
+ {key:'char',label:'Scent character',mode:'multi',dot:v=>(CHARS.find(c=>c[0]===v)||[])[3],options:()=>CHARS.map(c=>[c[0],c[1]]),test:(p,v)=>v.some(k=>{const c=CHARS.find(c=>c[0]===k);return c&&c[2].some(f=>p.fams.includes(f))})},
+ {key:'g',label:'For',mode:'single',options:()=>[['M','Men'],['F','Women'],['U','Unisex']],test:(p,v)=>p.g===v[0]},
+ {key:'note',label:'Contains note',mode:'text',test:(p,v)=>p.notes.some(n=>n.includes(v[0]))},
+ {key:'price',label:'Price',mode:'multi',options:()=>[['lt50','Under €50'],['50','€50–100'],['100','€100–200'],['200','€200+']],test:(p,v)=>v.some(k=>({lt50:p.price<50,'50':p.price>=50&&p.price<100,'100':p.price>=100&&p.price<200,'200':p.price>=200}[k]))},
+ {key:'dur',label:'Lasts on skin (per reviews)',mode:'single',options:()=>[['5','5 h or more'],['7','7 h or more'],['9','9 h or more']],test:(p,v)=>p.dur!=null&&p.dur>=+v[0]},
+ {key:'proj',label:'Projection',mode:'multi',options:()=>[['soft','Soft'],['mod','Moderate'],['strong','Strong']],test:(p,v)=>v.some(k=>k==='soft'?p.sil<=2:k==='mod'?p.sil===3:p.sil>=4)},
+ {key:'rate',label:'Rating',mode:'single',options:()=>[['4','4.0 and up'],['4.3','4.3 and up']],test:(p,v)=>p.rating>=+v[0]},
+ {key:'era',label:'Released',mode:'multi',options:()=>[['2020','2020s'],['2010','2010s'],['2000','2000s'],['old','Before 2000']],test:(p,v)=>v.some(k=>k==='old'?p.year<2000:p.year>=+k&&p.year<+k+10)},
+ {key:'brand',label:'Brand',mode:'multi',collapsed:true,options:()=>[...new Set(P.map(p=>p.brand))].sort().map(b=>[b,b]),test:(p,v)=>v.includes(p.brand)}
+];
+const SORTS=[['rating','Top rated'],['dur','Longest on skin'],['new','Newest'],['cheap','Lowest price per ml'],['value','Most hours per €']];
+const sortFns={rating:(a,b)=>b.rating-a.rating,dur:(a,b)=>(b.dur||0)-(a.dur||0),new:(a,b)=>b.year-a.year||b.id-a.id,cheap:(a,b)=>a.price/a.size-b.price/b.size,value:(a,b)=>(b.dur||0)/b.price-(a.dur||0)/a.price};
+let F={q:'',sort:'rating',sel:{}};
+const openG=new Map();
+function parseQuery(qs){
+  const sp=new URLSearchParams(qs),f={q:sp.get('q')||'',sort:sortFns[sp.get('sort')]?sp.get('sort'):'rating',sel:{}};
+  FILTERS.forEach(x=>{const v=sp.get(x.key);if(v)f.sel[x.key]=v.split(',').filter(Boolean)});
+  return f;
+}
+function toQuery(f){
+  const sp=new URLSearchParams();
+  if(f.q)sp.set('q',f.q);
+  if(f.sort!=='rating')sp.set('sort',f.sort);
+  FILTERS.forEach(x=>{const v=f.sel[x.key];if(v&&v.length)sp.set(x.key,v.join(','))});
+  const t=sp.toString();return '#/discover'+(t?'?'+t:'');
+}
+function matches(p,f,skip){
+  const q=f.q.trim().toLowerCase();
+  if(q&&!(p.name+' '+p.brand+' '+p.notes.join(' ')+' '+p.acc.join(' ')+' '+p.feel).toLowerCase().includes(q))return false;
+  return FILTERS.every(x=>x.key===skip||!(f.sel[x.key]||[]).length||x.test(p,f.sel[x.key]));
+}
+const filtered=()=>P.filter(p=>matches(p,F)).sort(sortFns[F.sort]||sortFns.rating);
+const optLabel=(x,v)=>x.mode==='text'?v:(x.options().find(o=>o[0]===v)||[v,v])[1];
+const selCount=()=>FILTERS.reduce((a,x)=>a+(F.sel[x.key]||[]).length,0);
+
+function quickHTML(){
+  const qp=(k,l,on)=>`<button class="chip" data-quick="${k}" aria-pressed="${on}">${l}</button>`;
+  return qp('now',`${SEASONS[NOW].label} picks`,(F.sel.season||[]).join()===NOW)+qp('new','Newest',F.sort==='new')+qp('dur','Longest on skin',F.sort==='dur')+qp('rating','Top rated',F.sort==='rating')+qp('cheap','Under €50',(F.sel.price||[]).join()==='lt50');
+}
+function facetsHTML(){
+  const allNotes=[...new Set(P.flatMap(p=>p.notes))].sort();
+  let h=`<div class="fhead"><b>Filters</b><button class="icon-btn" data-fclose aria-label="Close filters">×</button></div>`;
+  FILTERS.forEach(x=>{
+    const sel=F.sel[x.key]||[],isOpen=openG.has(x.key)?openG.get(x.key):!x.collapsed;
+    h+=`<details class="fg" data-fg="${x.key}" ${isOpen?'open':''}><summary><span>${esc(x.label)}</span>${sel.length?`<span class="cnt">${sel.length}</span>`:''}</summary>`;
+    const cnt=v=>P.filter(p=>matches(p,F,x.key)&&x.test(p,[v])).length;
+    if(x.mode==='text')h+=`<div class="chips"><input class="search sm" list="notelist" data-note placeholder="e.g. vanilla" value="${esc(sel[0]||'')}" aria-label="${esc(x.label)}"><datalist id="notelist">${allNotes.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>`;
+    else if(x.visual==='season')h+=`<div class="stiles">${x.options().map(([v,l])=>{const n=cnt(v),on=sel.includes(v);return `<button class="stile" data-fopt="season" data-val="${v}" aria-pressed="${on}" ${n===0&&!on?'disabled':''} style="${sVars(v)}">${seasonArt(v)}<b>${l}</b><small>${n} fragrance${n===1?'':'s'}</small>${v===NOW?'<em class="nowtag">Now</em>':''}</button>`}).join('')}</div>`;
+    else h+=`<div class="chips">${x.options().map(([v,l])=>{const n=cnt(v),on=sel.includes(v);return `<button class="fopt" data-fopt="${x.key}" data-val="${esc(v)}" aria-pressed="${on}" ${n===0&&!on?'disabled':''}>${x.dot?`<i style="background:${x.dot(v)}"></i>`:''}${esc(l)}<small>${n}</small></button>`}).join('')}</div>`;
+    h+=`</details>`;
+  });
+  h+=`<div class="ffoot"><button class="btn" data-fclear>Clear all</button><button class="btn pri" data-fclose>Show ${filtered().length} results</button></div>`;
+  return h;
+}
+function mainHTML(){
+  const r=filtered(),n=selCount(),chips=[],ss=F.sel.season||[];
+  if(F.q)chips.push(`<button class="achip" data-frm="q">Search: “${esc(F.q)}” ×</button>`);
+  FILTERS.forEach(x=>(F.sel[x.key]||[]).forEach(v=>chips.push(`<button class="achip" data-frm="${x.key}" data-val="${esc(v)}">${esc(x.label.split(' (')[0])}: ${esc(optLabel(x,v))} ×</button>`)));
+  const banner=ss.length===1&&SEASONS[ss[0]]?`<div class="sbanner" style="${sVars(ss[0])}">${seasonArt(ss[0])}<div class="sb-in"><h2>${SEASONS[ss[0]].label}</h2><p>${SEASONS[ss[0]].tag}</p></div></div>`:'';
+  return banner+`<div class="rbar"><h2>${r.length} fragrance${r.length===1?'':'s'}</h2><div class="row"><button class="chip fbtn" data-fopen>Filters${n?` · ${n}`:''}</button><select class="chip" id="sort" aria-label="Sort by">${SORTS.map(([k,l])=>`<option value="${k}" ${F.sort===k?'selected':''}>${l}</option>`).join('')}</select></div></div>`
+   +(chips.length?`<div class="active">${chips.join('')}<button class="linkbtn" data-fclear>Clear all</button></div>`:'')
+   +(r.length?`<div class="list">${r.map(p=>resultCard(p)).join('')}</div>`:`<div class="empty" style="margin-top:14px">Nothing matches these filters. <button class="linkbtn" data-fclear>Clear all filters</button></div>`);
+}
+function discoverView(){
+  return `<div class="controls"><input class="search" id="q" type="search" placeholder="Try “vanilla”, “smoky”, “fresh citrus” or a name" value="${esc(F.q)}" aria-label="Search fragrances"><div class="row" id="quick">${quickHTML()}</div></div>
+  <div class="fscrim" data-fclose></div>
+  <div class="dgrid"><aside class="fpanel" id="facets" aria-label="Filters">${facetsHTML()}</aside><div id="dmain">${mainHTML()}</div></div>`;
+}
+function syncHash(){try{history.replaceState(null,'',toQuery(F))}catch(e){}}
+function refreshDiscover(){
+  const a=document.getElementById('facets'),m=document.getElementById('dmain'),q=document.getElementById('quick');
+  if(!a||!m)return;a.innerHTML=facetsHTML();m.innerHTML=mainHTML();q.innerHTML=quickHTML();
+}
+function commit(){syncHash();refreshDiscover()}
+
+/* --- Fragrance page --- */
+const layerTitle={top:['Opening','First 30 minutes'],heart:['Heart','30 minutes to 3 hours'],base:['Dry-down','3 hours onwards']};
+function chartSVG(p){
+  const X=t=>40+t/12*580,Y=v=>190-v*150,pts=[];
+  for(let t=0;t<=12.001;t+=0.25)pts.push(t);
+  const path=k=>'M'+X(0)+' '+Y(0)+' '+pts.map(t=>`L${X(t).toFixed(1)} ${Y(levels(p,t)[k]).toFixed(1)}`).join(' ')+` L${X(12)} ${Y(0)} Z`;
+  const D=p.dur;
+  let s=`<svg id="chart" viewBox="0 0 640 230" role="img" aria-label="How the scent changes over 12 hours">`;
+  [0,0.5,1].forEach(v=>{s+=`<line x1="40" x2="620" y1="${Y(v*0.95)}" y2="${Y(v*0.95)}" stroke="var(--line)" stroke-width="1"/>`});
+  p.layers.forEach(l=>{s+=`<path d="${path(l.key)}" fill="${l.col}" fill-opacity=".5" stroke="${l.col}" stroke-width="2"/>`});
+  [0,1,2,4,6,8,10,12].forEach(t=>{s+=`<text class="ax" x="${X(t)}" y="212" text-anchor="middle">${t?t+' h':'0'}</text>`});
+  if(D)s+=`<line x1="${X(Math.min(D,12))}" x2="${X(Math.min(D,12))}" y1="26" y2="190" stroke="var(--muted)" stroke-dasharray="4 4"/><text class="ax" x="${X(Math.min(D,12))}" y="16" text-anchor="middle">reviewers: gone around ${D.toFixed(1)} h</text>`;
+  s+=`<line id="cur" x1="${X(0.2)}" x2="${X(0.2)}" y1="22" y2="190" stroke="var(--accent)" stroke-width="2.5"/><circle id="curd" cx="${X(0.2)}" cy="190" r="6" fill="var(--accent)"/></svg>`;
+  return s;
+}
+function detailView(p){
+  const S=Store.s,o=S.owned[p.id],w=S.wish.includes(p.id);
+  let h=`<a class="back" href="${Router.from==='discover'?toQuery(F):'#/'}">← ${Router.from==='discover'?'Discover':'My shelf'}</a>`;
+  h+=`<section class="hero" id="hero"><div class="aura" id="aura"></div>${thumb(p,'lg',o?o.ml/p.size:null)}<div class="brand">${esc(p.brand)}</div><h1>${esc(p.name)}</h1><div class="spec">${p.year} · ${gl(p.g)} · ${eur(p.price)} for ${p.size} ml</div><div class="spec" style="margin-top:6px">${seasonDots(p)} ${esc(bestText(p))}</div><span class="feel">${esc(p.feel)}</span>
+  <div class="actions">${o?'':`<button class="btn pri" data-own="on">Add to my shelf</button><button class="btn" data-wish>${w?'Remove from wishlist':'Add to wishlist'}</button>`}<label class="btn" style="cursor:pointer">${photoOf(p)?'Change bottle photo':'Add bottle photo'}<input type="file" id="photo-in" class="sr" accept="image/*"></label>${S.photos[p.id]?'<button class="btn danger" data-photo-rm>Remove photo</button>':''}</div></section>`;
+  h+=`<div class="narrow">`;
+  if(o)h+=`<div class="sec" style="margin-top:18px"><div class="own-box" id="ownbox">${ownBoxInner(p,o)}</div></div>`;
+  // Timeline
+  h+=`<section class="sec"><h2>How it smells over time</h2><p class="lead">Drag through the hours to smell it open, settle and fade on skin.</p>
+  <div class="tl"><div class="quick">${[[0.2,'First spray'],[1,'1 h'],[3,'3 h'],[6,'6 h'],[10,'10 h']].map(([t,l])=>`<button class="chip" data-t="${t}">${l}</button>`).join('')}</div>
+  ${chartSVG(p)}
+  <div class="scrub"><input type="range" id="time" min="0" max="12" step="0.05" value="0.2" aria-label="Hours since spraying"><output id="tout">12 min</output></div>
+  <div class="now" id="now"></div></div>
+  <div class="phases">${p.layers.map(l=>`<div class="phase" data-ph="${l.key}"><h4>${layerTitle[l.key][0]}</h4><div class="when">${layerTitle[l.key][1]}</div><p>${esc(phaseText(p,l.key))}</p></div>`).join('')}</div></section>`;
+  h+=`<section class="sec"><h2>When to wear it</h2><p class="lead">${esc(bestText(p))}. Tap a season to see more fragrances for it.</p><div class="sgrid">${SEASON_KEYS.map((k,i)=>{const sc=p.seasons[i];return `<a class="stile" href="#/discover?season=${k}" style="${sVars(k)};opacity:${sc===0?.45:1}">${seasonArt(k)}<b>${SEASONS[k].label}</b><span>${SCORE_LABEL[sc]}</span><span class="pips">${[1,2,3].map(n=>`<i style="opacity:${n<=sc?1:.2}"></i>`).join('')}</span></a>`}).join('')}</div></section>`;
+  // Duration from reviews
+  h+=`<section class="sec"><h2>How long it lasts</h2><p class="lead">Based on what ${p.reviews?p.reviews.toLocaleString()+' reviewers':'reviewers'} report.</p>`;
+  if(p.votes){
+    const mx=Math.max(...p.votes);
+    h+=`<div class="dur"><div><div class="big">${p.dur.toFixed(1)}<small> h</small></div><div class="lbl">${durLabel(p.dur)} on average</div></div><div class="votes">${p.votes.map((v,i)=>`<div class="vrow ${v===mx?'top':''}"><span>${VOTE_LABELS[i][0]}<span style="color:var(--muted)"> ${VOTE_LABELS[i][1]}</span></span><div class="vbar"><i style="width:${v/mx*100}%"></i></div><span>${Math.round(v/p.reviews*100)}%</span></div>`).join('')}</div></div>`;
+  }else h+=`<div class="empty">No duration reviews yet.</div>`;
+  h+=`</section>`;
+  // Wear
+  h+=`<section class="sec"><h2>How to wear it</h2><p class="lead">${p.spr} spray${p.spr>1?'s':''} is a good start. One bottle gives roughly ${Math.round(p.size/ML_PER_SPRAY/p.spr)} wears.</p>
+  <div class="dots" aria-label="${p.spr} sprays">${Array.from({length:p.spr},()=>'<i></i>').join('')}</div>
+  <div style="margin-top:14px;color:var(--muted);font-size:15px">Projection: <b style="color:var(--ink);font-weight:500">${PROJ[p.sil]}</b></div><div class="dots t" style="max-width:240px">${[1,2,3,4,5].map(i=>`<i class="${i<=p.sil?'on':''}"></i>`).join('')}</div></section>`;
+  // Details plate
+  h+=`<section class="sec"><h2>Details</h2><dl class="plate"><dt>Notes</dt><dd>${esc(p.notes.join(', '))}</dd><dt>Accords</dt><dd>${esc(p.acc.join(', '))}</dd><dt>Rating</dt><dd>★ ${p.rating.toFixed(1)}</dd><dt>Price per ml</dt><dd>€${(p.price/p.size).toFixed(2)}</dd><dt>Released</dt><dd>${p.year}</dd></dl></section>`;
+  const s4=similarTo(p,4),ch=similarTo(p,3,true);
+  if(s4.length)h+=`<section class="sec"><h2>Smells similar</h2><div class="mini" style="margin-top:12px">${s4.map(({q})=>`<a href="#/p/${q.id}"><span>${esc(q.name)}<small>${esc(q.brand)}${shared(p,q).length?' · '+esc(shared(p,q).slice(0,3).join(', ')):''}</small></span><b style="font-weight:500">${eur(q.price)}</b></a>`).join('')}</div></section>`;
+  if(ch.length)h+=`<section class="sec"><h2>Cheaper alternatives</h2><div class="mini" style="margin-top:12px">${ch.map(({q})=>`<a href="#/p/${q.id}"><span>${esc(q.name)}<small>${esc(q.brand)} · ${Math.round((1-(q.price/q.size)/(p.price/p.size))*100)}% less per ml</small></span><b style="font-weight:500">${eur(q.price)}</b></a>`).join('')}</div></section>`;
+  h+=`</div>`;
+  return h;
+}
+function ownBoxInner(p,o){
+  return `<div><b style="font-weight:500">${sprays(o)} sprays left</b> · ${o.ml.toFixed(1)} of ${p.size} ml · worn ${o.wears}×${o.last?' · last '+o.last:''}</div>
+  <div class="row"><label>Sprays today <select id="nsp" class="chip">${[1,2,3,4,5,6,8].map(n=>`<option ${n===p.spr?'selected':''}>${n}</option>`).join('')}</select></label><button class="btn pri" data-wear>Log a wear</button></div>
+  <label style="font-size:14px;color:var(--muted)">Adjust remaining liquid<input type="range" id="rem" min="0" max="${p.size}" step="0.5" value="${o.ml}"></label>
+  <div class="row"><button class="btn danger" data-own="off">Remove from shelf</button></div>`;
+}
+
+/* Timeline interaction: update in place so the slider never loses focus */
+function initTimeline(p){
+  const time=document.getElementById('time');if(!time)return;
+  const X=t=>40+t/12*580;
+  function update(t){
+    const lv=levels(p,t),tot=lv.top+lv.heart+lv.base;
+    document.getElementById('tout').textContent=hrs(t);
+    document.getElementById('cur').setAttribute('x1',X(t));document.getElementById('cur').setAttribute('x2',X(t));
+    const cd=document.getElementById('curd');cd.setAttribute('cx',X(t));cd.setAttribute('cy',190-Math.max(lv.top,lv.heart,lv.base)*150);
+    const act=t<0.5?'top':t<3?'heart':'base';
+    document.querySelectorAll('.phase').forEach(e=>e.classList.toggle('on',e.dataset.ph===act&&tot>0.12));
+    document.getElementById('aura').style.background=mix(p.layers.map(l=>l.col),[lv.top+.02,lv.heart+.02,lv.base+.02]);
+    document.getElementById('aura').style.opacity=(0.18+Math.min(tot,1)*0.4).toFixed(2);
+    const chips=[];
+    p.layers.forEach(l=>l.notes.forEach(n=>chips.push({n,v:lv[l.key]})));
+    const faded=Math.max(lv.top,lv.heart,lv.base)<0.12;
+    document.getElementById('now').innerHTML=`<small>${faded?'Mostly gone from skin by now':`On your skin at ${hrs(t)}`}</small>`+chips.filter(c=>faded||c.v>0.06).map(c=>`<span class="pill" style="opacity:${faded?0.35:clamp(c.v/0.8,0.3,1).toFixed(2)};border-color:${noteCol(c.n)}"><i style="background:${noteCol(c.n)}"></i>${esc(c.n)}</span>`).join('');
+    time.value=t;
+  }
+  time.oninput=()=>update(+time.value);
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>update(+b.dataset.t));
+  update(0.2);
+}
+
+/* ---------- 6. ROUTER + EVENTS ---------- */
+const Router={from:'shelf',cur:null,y:{},fresh:true};
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
+function parse(){
+  const raw=location.hash.replace(/^#/,'')||'/',i=raw.indexOf('?'),h=i<0?raw:raw.slice(0,i),qs=i<0?'':raw.slice(i+1);
+  const m=h.match(/^\/p\/(\d+)/);if(m)return{name:'detail',id:+m[1]};
+  if(h.startsWith('/discover'))return{name:'discover',qs};
+  return{name:'shelf'};
+}
+function render(){
+  const r=parse(),app=document.getElementById('app');
+  if(r.name==='discover'&&Router.fresh)F=parseQuery(r.qs);
+  Router.fresh=false;document.body.classList.remove('fp-open');
+  if(Router.cur&&Router.cur.name!=='detail')Router.y[Router.cur.name]=window.scrollY;
+  if(r.name==='detail'&&Router.cur&&Router.cur.name!=='detail')Router.from=Router.cur.name;
+  const same=Router.cur&&Router.cur.name===r.name&&Router.cur.id===r.id;
+  Router.cur=r;
+  document.getElementById('t-shelf').removeAttribute('aria-current');document.getElementById('t-discover').removeAttribute('aria-current');
+  const tab=r.name==='discover'?'t-discover':(r.name==='shelf'?'t-shelf':(Router.from==='discover'?'t-discover':'t-shelf'));
+  document.getElementById(tab).setAttribute('aria-current','page');
+  const p=r.name==='detail'?byId[r.id]:null;
+  if(r.name==='detail'&&!p){app.innerHTML=`<div class="empty" style="margin-top:30px">That fragrance isn't in the catalogue. <a href="#/discover" style="text-decoration:underline">Browse Discover</a></div>`;return}
+  let body=r.name==='shelf'?shelfView():r.name==='discover'?discoverView():detailView(p);
+  app.innerHTML=body+(r.name==='shelf'||r.name==='discover'?`<p class="foot">Sample data for prototyping: prices, ratings and review counts are illustrative. Bottle photos: add your own on each fragrance page.</p>`:'');
+  if(r.name==='detail'){initTimeline(p);bindRem();if(!same)window.scrollTo(0,0)}
+  else if(!same)window.scrollTo(0,Router.y[r.name]||0);
+}
+window.addEventListener('hashchange',()=>{Router.fresh=true;render()});
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-own],[data-wish],[data-wear],[data-photo-rm],[data-season],[data-fopt],[data-frm],[data-fclear],[data-quick],[data-fopen],[data-fclose],[data-rec],[data-clear-demo],[data-copy],[data-import]');
+  if(!t)return;
+  const d=t.dataset,S=Store.s,r=Router.cur,id=r&&r.id;
+  if('season' in d){SS=d.season;render();return}
+  if('fopen' in d){document.body.classList.add('fp-open');return}
+  if('fclose' in d){document.body.classList.remove('fp-open');return}
+  if('fopt' in d){const k=d.fopt,x=FILTERS.find(f=>f.key===k),cur=F.sel[k]||[],v=d.val;
+    F.sel[k]=cur.includes(v)?cur.filter(a=>a!==v):(x.mode==='single'?[v]:[...cur,v]);commit();return}
+  if('frm' in d){if(d.frm==='q'){F.q='';document.getElementById('q').value=''}else F.sel[d.frm]=(F.sel[d.frm]||[]).filter(a=>a!==d.val);commit();return}
+  if('fclear' in d){F.q='';F.sel={};document.getElementById('q').value='';commit();return}
+  if('quick' in d){if(d.quick==='cheap'){F.sel.price=(F.sel.price||[]).join()==='lt50'?[]:['lt50']}else if(d.quick==='now'){F.sel.season=(F.sel.season||[]).join()===NOW?[]:[NOW]}else F.sort=d.quick;commit();return}
+  if('rec' in d){recCheap=d.rec==='cheap';render();return}
+  if('clearDemo' in d){S.owned={};S.demo=false;Store.save();render();return}
+  if('copy' in d){const ta=document.getElementById('bk');ta.select();try{navigator.clipboard.writeText(ta.value);toast('Backup copied')}catch(x){toast('Backup selected, copy it manually')}return}
+  if('import' in d){try{Store.importJSON(document.getElementById('bk').value);toast('Shelf restored');render()}catch(x){toast('That backup text isn\'t valid')}return}
+  if('photoRm' in d){delete S.photos[id];Store.save();render();return}
+  if('own' in d){
+    if(d.own==='on'){if(S.demo){S.owned={};S.demo=false}S.owned[id]={ml:byId[id].size,wears:0,last:null};S.wish=S.wish.filter(x=>x!==id);toast('Added to your shelf')}
+    else{delete S.owned[id];toast('Removed from your shelf')}
+    Store.save();render();return}
+  if('wish' in d){const i=S.wish.indexOf(id);i>=0?S.wish.splice(i,1):S.wish.push(id);Store.save();toast(i>=0?'Removed from wishlist':'Added to wishlist');render();return}
+  if('wear' in d){const o=S.owned[id],n=+document.getElementById('nsp').value;o.ml=Math.max(0,+(o.ml-n*ML_PER_SPRAY).toFixed(2));o.wears++;o.last=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});Store.save();toast(`Logged ${n} sprays`);document.getElementById('ownbox').innerHTML=ownBoxInner(byId[id],o);bindRem()}
+});
+function bindRem(){
+  const rem=document.getElementById('rem');if(!rem)return;
+  const id=Router.cur.id,p=byId[id];
+  rem.oninput=()=>{Store.s.owned[id].ml=+rem.value;Store.save();rem.parentElement.parentElement.firstElementChild.innerHTML=`<b style="font-weight:500">${sprays(Store.s.owned[id])} sprays left</b> · ${(+rem.value).toFixed(1)} of ${p.size} ml · worn ${Store.s.owned[id].wears}×`};
+  rem.onchange=()=>render();
+}
+let qTimer;
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){F.q=e.target.value;clearTimeout(qTimer);qTimer=setTimeout(commit,120)}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='sort'){F.sort=t.value;commit()}
+  if(t.dataset&&'note' in t.dataset){const v=t.value.trim().toLowerCase();F.sel.note=v?[v]:[];commit()}
+  if(t.id==='photo-in'&&t.files&&t.files[0]){
+    readPhoto(t.files[0]).then(url=>{const id=Router.cur.id;Store.s.photos[id]=url;if(Store.save())toast('Photo saved');else{delete Store.s.photos[id];toast('Photo is too large to store here')}render()}).catch(()=>toast('Could not read that image'));
+  }
+});
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.dataset&&d.dataset.fg)openG.set(d.dataset.fg,d.open)},true);
+document.getElementById('theme').onclick=()=>{
+  const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme=dark?'light':'dark';try{localStorage.setItem('scentshelf-theme',r.dataset.theme)}catch(e){}
+};
+try{const th=localStorage.getItem('scentshelf-theme');if(th)document.documentElement.dataset.theme=th}catch(e){}
+
+/* boot */
+(async function(){
+  P=await Source.all();byId=Object.fromEntries(P.map(p=>[p.id,p]));
+  Store.load();Store.s.photos=Store.s.photos||{};
+  Router.fresh=true;render();
+})();
+</script>
+</body>
+</html>
